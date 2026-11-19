@@ -125,8 +125,15 @@ The compatibility build passes all 31 applicable patches and the travel,
 save/load, packet, lobby-settings, and optional-settings checks on stable
 **v0.107.1**. The beta-only native handshake comparison test is explicitly
 skipped on stable. Startup, the Mods settings panel, and map behavior have also
-been confirmed in-game on stable. A beta recheck of this build is still pending.
-Earlier game versions have not been verified.
+been confirmed in-game on stable. Earlier game versions have not been verified.
+
+Beta **v0.113.1** reproduces the reported new-run failure in the published mod:
+`NMapMarker.SetMapPoint` now accepts `Control` instead of `NMapPoint`. Gravity
+resolves that method at runtime to support both signatures. The encounter tooltip
+also omits its unnecessary ID assignment because `HoverTip.Id` is now read-only;
+its player-facing text is unchanged. All 32 patches and the integration checks,
+including marker binding and tooltip creation, pass against the installed beta.
+In-game validation of the fixed build is pending.
 
 If the game reports that Gravity's DLL assembly failed to initialize, check the
 game version and the exception in `SlayTheSpire2/logs/godot.log`. This message

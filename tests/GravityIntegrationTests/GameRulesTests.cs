@@ -2,6 +2,7 @@ using System.Runtime.CompilerServices;
 using Gravity;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Map;
+using MegaCrit.Sts2.Core.Nodes.Screens.Map;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Runs.History;
 
@@ -26,6 +27,10 @@ internal static class GameRulesTests
         var choices = MapTravel.GetTravelablePointsFrom(run, map.StartingMapPoint).ToArray();
         Check(choices.Length == 60, "Patched API must expose every encounter");
         Check(GravityTopBarProgress.Text(run) == "0/15", "A new act must start with an empty goal");
+        var tip = GravityTopBarProgress.Tooltip(run);
+        Check(tip.Title == "Encounters" && tip.Description.Contains("Visit 15 to unlock the boss.")
+            && tip.Description.Contains("Open Gravity appearance settings."),
+            "The encounter tooltip must retain its localized title, goal, and settings hint");
         var order = choices.OrderByDescending(point => point.coord.row).Take(15).ToArray();
         for (var i = 0; i < order.Length; i++)
         {
@@ -64,6 +69,8 @@ internal static class GameRulesTests
             "Always-unlocked bosses must ignore the encounter lock");
         Check(GravityRules.Progress(run).RequiredEncounters == 0, "Disabled requirement did not reach travel rules");
         Check(GravityTopBarProgress.Text(run) == "15", "Off must hide the denominator");
+        Check(GravityTopBarProgress.Tooltip(run).Description.Contains("No boss unlock requirement."),
+            "The tooltip must describe an unrestricted run");
         GravityRunSettings.Set(run.ExtraFields, 15);
         foreach (var point in choices.Except(order).Take(2))
         {
@@ -76,6 +83,11 @@ internal static class GameRulesTests
         GravitySettings.RestoreEncounterPreferences(15, true);
         run.AddVisitedMapCoord(map.BossMapPoint.coord);
         Check(MapTravel.GetTravelablePointsFrom(run, map.BossMapPoint).SequenceEqual([map.SecondBossMapPoint!]), "Second boss order failed");
+        // A disabled marker returns before touching native Godot state. Exercise
+        // the real binding: patch installation alone misses removed UI methods.
+        var marker = (NMapMarker)RuntimeHelpers.GetUninitializedObject(typeof(NMapMarker));
+        GravityMapMarker.SetMapPoint(marker, null!);
+        Console.WriteLine("Passed encounter tooltip and map-marker API compatibility checks.");
         Console.WriteLine("Passed real-game travel and room-history checks using the installed patches.");
     }
 
